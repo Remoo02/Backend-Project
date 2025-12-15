@@ -1,0 +1,201 @@
+@host = http://localhost:3000
+
+######################################################
+# 0. HEALTH CHECK / BASIC UNAUTHENTICATED REQUEST
+######################################################
+
+### Try to get skis WITHOUT token (should be 401)
+GET {{host}}/api/skis
+
+
+
+######################################################
+# 1. AUTH – LOGIN AS ADMIN + USER
+# (assuming you have seeded users:
+#  admin@skishop.com / Password123!
+#  user@skishop.com  / Password123!
+######################################################
+
+### LOGIN ADMIN
+# @name loginAdmin
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@skishop.com",
+  "password": "Password123!"
+}
+
+### LOGIN USER
+# @name loginUser
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@skishop.com",
+  "password": "Password123!"
+}
+
+### Extract tokens into variables
+@adminToken = {{loginAdmin.response.body.token}}
+@userToken  = {{loginUser.response.body.token}}
+
+
+
+######################################################
+# 2. BASIC READ – LIST + FILTER SKIS
+######################################################
+
+### List all skis as USER (should be 200)
+GET {{host}}/api/skis
+Authorization: Bearer {{userToken}}
+
+### List skis with filters (brand + minPrice)
+GET {{host}}/api/skis?brand=Atomic&minPrice=500
+Authorization: Bearer {{userToken}}
+
+### List skis with category + skillLevel
+GET {{host}}/api/skis?category=all-mountain&skillLevel=intermediate
+Authorization: Bearer {{userToken}}
+
+
+
+######################################################
+# 3. ADMIN – CREATE SKI (VALID REQUEST)
+######################################################
+
+### Create a new ski as ADMIN (should be 201)
+# @name createSki
+POST {{host}}/api/skis
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "brand": "Atomic",
+  "model": "Redster G9",
+  "length": 177,
+  "category": "race",
+  "skillLevel": "expert",
+  "price": 1199,
+  "inStock": true
+}
+
+### Extract created ski ID
+@skiId = {{createSki.response.body._id}}
+
+
+
+######################################################
+# 4. ADMIN – CREATE SKI (VALIDATION ERROR)
+######################################################
+
+### Create ski with missing fields (should be 400)
+POST {{host}}/api/skis
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "brand": "TooShort",
+  "model": "",
+  "length": 90,
+  "category": "unknown-category",
+  "skillLevel": "expert"
+}
+
+# Expect: 400 Validation error (Joi) – invalid length, model, category, lack of price, etc.
+
+
+
+######################################################
+# 5. READ SINGLE SKI
+######################################################
+
+### Get the ski we just created (should be 200)
+GET {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{userToken}}
+
+### Try getting with invalid ID format (should be 400)
+GET {{host}}/api/skis/1234
+Authorization: Bearer {{userToken}}
+
+
+
+######################################################
+# 6. UPDATE SKI (ADMIN) – SUCCESS + VALIDATION
+######################################################
+
+### Update ski price and stock as ADMIN (should be 200)
+PUT {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 999,
+  "inStock": false
+}
+
+### Update with invalid data (e.g. negative price) – should be 400
+PUT {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": -5
+}
+
+
+
+######################################################
+# 7. DELETE SKI (ADMIN) – SUCCESS + NOT FOUND
+######################################################
+
+### Delete ski as ADMIN (should be 204)
+DELETE {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
+
+### Delete same ski again (should be 404)
+DELETE {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
+
+
+
+######################################################
+# 8. PERMISSION TESTS – RBAC
+######################################################
+
+### USER tries to create a ski (should be 403)
+POST {{host}}/api/skis
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "brand": "Salomon",
+  "model": "QST 98",
+  "length": 172,
+  "category": "all-mountain",
+  "skillLevel": "intermediate",
+  "price": 749,
+  "inStock": true
+}
+
+### USER tries to delete some ski (should be 403)
+DELETE {{host}}/api/skis/{{skiId}}
+Authorization: Bearer {{userToken}}
+
+
+
+######################################################
+# 9. TOKEN / AUTH ERROR CASES
+######################################################
+
+### Invalid token (should be 401)
+GET {{host}}/api/skis
+Authorization: Bearer invalid.token.here
+
+### Missing Bearer prefix (should be 401 in your middleware)
+GET {{host}}/api/skis
+Authorization: {{adminToken}}
+
+
+### No Authorization header at all (already at the top, also 401)
+GET {{host}}/api/skis

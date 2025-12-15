@@ -1,0 +1,117 @@
+#############################################
+#  AUTH: REGISTER (optional, for testing)
+#############################################
+
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Password123!"
+}
+
+
+
+#############################################
+#  AUTH: LOGIN (ADMIN)
+#############################################
+
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@skishop.com",
+  "password": "Password123!"
+}
+
+###
+# Copy the "token" field from the response and paste below:
+###
+
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTNmYjk0NjBkMTNlNzQ4NDFmNmE3M2YiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjU3ODM4OTYsImV4cCI6MTc2NTc4NzQ5Nn0.iAexqIoXlmYapgW1rjcEknbuMBQolOz6zpqmyzfTf2I
+
+
+
+#############################################
+#  AUTH: LOGIN (USER)
+#############################################
+
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@skishop.com",
+  "password": "Password123!"
+}
+
+###
+# Copy user token here
+###
+
+@userToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTNmYjk0NjBkMTNlNzQ4NDFmNmE3M2YiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjU3ODM4OTYsImV4cCI6MTc2NTc4NzQ5Nn0.iAexqIoXlmYapgW1rjcEknbuMBQolOz6zpqmyzfTf2I
+
+
+#############################################
+#  GET ALL SKIS (any logged-in user)
+#############################################
+
+GET http://localhost:3000/api/skis
+Authorization: Bearer {{userToken}}
+
+
+
+#############################################
+#  GET SKI BY ID
+#############################################
+
+GET http://localhost:3000/api/skis/{{skiId}}
+Authorization: Bearer {{userToken}}
+
+###
+# Optional placeholder so REST Client doesn't error
+@skiId = 123456789012345678901234
+###
+
+
+
+#############################################
+#  ADMIN: CREATE NEW SKI
+#############################################
+
+POST http://localhost:3000/api/skis
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "brand": "Atomic",
+  "model": "Redster G9",
+  "length": 177,
+  "category": "race",
+  "skillLevel": "expert",
+  "price": 1199,
+  "inStock": true
+}
+
+
+
+#############################################
+#  ADMIN: UPDATE SKI
+#############################################
+
+PUT http://localhost:3000/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "price": 999,
+  "inStock": false
+}
+
+
+
+#############################################
+#  ADMIN: DELETE SKI
+#############################################
+
+DELETE http://localhost:3000/api/skis/{{skiId}}
+Authorization: Bearer {{adminToken}}
