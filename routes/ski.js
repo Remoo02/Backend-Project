@@ -2,13 +2,13 @@ const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/role');
 const skiController = require('../controllers/ski');
-const validate = require('../middleware/validate'); // your Joi wrapper
+const validate = require('../middleware/validate');
 const { skiCreateSchema, skiUpdateSchema } = require('../validators/ski');
 
 const router = express.Router();
 
 // Public for authenticated users
-router.get('/', skiController.listSkis);
+router.get('/',requireAuth, skiController.listSkis);
 router.get('/:id', requireAuth, skiController.getSkiById);
 
 // Admin only

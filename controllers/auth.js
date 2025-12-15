@@ -17,10 +17,9 @@ function signToken(user) {
 
 // POST /api/auth/register
 // Expect: { email, password }
-// (Role is set to "user" by default; create admin manually or via seed)
 exports.register = async (req, res) => {
     try {
-        const { email, password } = req.body; // assume Joi validated this
+        const { email, password } = req.body;
 
         const existing = await User.findOne({ email });
         if (existing) {

@@ -125,7 +125,6 @@ exports.deleteSki = async (req, res) => {
             return res.status(404).json({ message: 'Ski not found' });
         }
 
-        // 204 normally has no body; but many APIs return deleted entity; your choice
         res.status(204).send();
     } catch (err) {
         console.error('Error deleting ski:', err);
